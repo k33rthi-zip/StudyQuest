@@ -26,9 +26,17 @@ public class AddTaskOutputData {
             this.note = note;
         }
 
-        public String getTitle() { return title; }
-        public LocalDate getDueDate() { return dueDate; }
-        public int getPriority() { return priority; }
-        public String getNote() { return note; }
+        public String getTitle() {
+            return title;
+        }
+        public LocalDate getDueDate() {
+            return dueDate;
+        }
+        public int getPriority() {
+            return priority;
+        }
+        public String getNote() {
+            return note;
+        }
     }
 }

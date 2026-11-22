@@ -1,5 +1,4 @@
-
-        package app;
+package app;
 
 import java.awt.CardLayout;
 import javax.swing.JFrame;
@@ -39,6 +38,7 @@ public class AppBuilder {
         final AddTaskOutputBoundary outputBoundary = new AddTaskPresenter(addTaskViewModel);
         final AddTaskInputBoundary interactor = new AddTaskInteractor(taskDataAccessObject, outputBoundary);
         addTaskView.setAddTaskController(new AddTaskController(interactor));
+        addTaskView.setBackToDashboardAction(() -> cardLayout.show(cardPanel, "dashboard"));
         return this;
     }
 

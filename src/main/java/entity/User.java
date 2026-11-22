@@ -50,7 +50,6 @@ public class User {
 
 
     public void addTask(String taskId) {
-        // TODO: Confirm Task storage design
         throw new UnsupportedOperationException(
                 "Task integration not implemented yet");
     }

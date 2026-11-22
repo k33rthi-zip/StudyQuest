@@ -19,6 +19,7 @@ public class AddTaskInputData {
     }
 
     public String getTitle() {
+
         return title;
     }
     public String getDueDate() {

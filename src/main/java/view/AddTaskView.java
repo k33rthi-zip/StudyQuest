@@ -1,7 +1,26 @@
 package view;
 
-import java.awt.*;
-import javax.swing.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+
+import javax.swing.BorderFactory;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+
 import interface_adapter.add_task.AddTaskController;
 import interface_adapter.add_task.AddTaskState;
 import interface_adapter.add_task.AddTaskViewModel;
@@ -9,32 +28,41 @@ import interface_adapter.add_task.AddTaskViewModelListener;
 
 public class AddTaskView extends JPanel implements AddTaskViewModelListener {
 
+    private static final String FIRST_TASK_HINT = "Create your first task! Fill in the form and click Add Task.";
+
     private final AddTaskViewModel viewModel;
     private AddTaskController controller;
 
     private final JTextField titleField = new JTextField(22);
     private final JTextField dueField = new JTextField(10);
     private final JComboBox<String> priorityBox =
-            new JComboBox<>(new String[] {"1 - Low", "2 - Mid", "3 - High"});
+            new JComboBox<>(new String[] {"Low", "Mid", "High"});
     private final JTextArea noteArea = new JTextArea(3, 22);
     private final DefaultListModel<String> listModel = new DefaultListModel<>();
     private final JList<String> taskList = new JList<>(listModel);
-    private final JLabel statusLabel = Y2KStyle.label("Ready.");
+    private final JLabel statusLabel = Y2KStyle.label(FIRST_TASK_HINT);
     private final JButton addButton = Y2KStyle.button("Add Task");
-    private final JButton cancelButton = Y2KStyle.button("Cancel");
+    private final JButton completeButton = Y2KStyle.button("Complete Task");
+    private final JButton backButton = Y2KStyle.compactButton("Back to Dashboard >");
+    private Runnable backToDashboardAction = () -> { };
+    private Runnable completeTaskAction = () -> setStatus("Complete Task isn't connected yet.", false);
 
     public AddTaskView(AddTaskViewModel viewModel) {
         this.viewModel = viewModel;
         this.viewModel.addListener(this);
 
-        setBackground(Y2KStyle.TEAL);
-        setLayout(new GridBagLayout());
-        add(buildWindow());
+        setLayout(new BorderLayout());
+        add(buildWindow(), BorderLayout.CENTER);
 
+        backButton.addActionListener(event -> backToDashboardAction.run());
         addButton.addActionListener(event -> submit(false));
-        cancelButton.addActionListener(event -> {
-            clearForm();
-            setStatus("Cancelled. No task was added.", false);
+        completeButton.addActionListener(event -> {
+            if (taskList.getSelectedIndex() < 0) {
+                setStatus("Select a task in the Task List first.", true);
+            }
+            else {
+                completeTaskAction.run();
+            }
         });
     }
 
@@ -42,14 +70,30 @@ public class AddTaskView extends JPanel implements AddTaskViewModelListener {
         this.controller = controller;
     }
 
+    /**
+     * Sets what the "Back to Dashboard" button does (the app wiring decides how to switch views).
+     * @param action the code to run when the button is clicked
+     */
+    public void setBackToDashboardAction(Runnable action) {
+        this.backToDashboardAction = action;
+    }
+
+    /**
+     * Sets what the "Complete Task" button does once a task is selected in the list.
+     * @param action the code to run when the button is clicked
+     */
+    public void setCompleteTaskAction(Runnable action) {
+        this.completeTaskAction = action;
+    }
+
     private JPanel buildWindow() {
         final JPanel window = new JPanel(new BorderLayout());
         window.setBackground(Y2KStyle.SILVER);
         window.setBorder(BorderFactory.createCompoundBorder(Y2KStyle.raised(),
                 BorderFactory.createEmptyBorder(3, 3, 3, 3)));
-        window.setPreferredSize(new Dimension(560, 600));
+        window.setPreferredSize(new Dimension(960, 680));
 
-        window.add(Y2KStyle.titleBar("StudyQuest - My Tasks.exe"), BorderLayout.NORTH);
+        window.add(Y2KStyle.titleBar("StudyQuest - TaskManager", backButton), BorderLayout.NORTH);
 
         final JPanel body = new JPanel(new BorderLayout(0, 8));
         body.setBackground(Y2KStyle.SILVER);
@@ -58,8 +102,9 @@ public class AddTaskView extends JPanel implements AddTaskViewModelListener {
         body.add(buildList(), BorderLayout.CENTER);
         window.add(body, BorderLayout.CENTER);
 
+        statusLabel.setFont(Y2KStyle.STATUS_FONT);
         statusLabel.setBorder(BorderFactory.createCompoundBorder(Y2KStyle.sunken(),
-                BorderFactory.createEmptyBorder(2, 6, 2, 6)));
+                BorderFactory.createEmptyBorder(4, 8, 4, 8)));
         final JPanel statusBar = new JPanel(new BorderLayout());
         statusBar.setBackground(Y2KStyle.SILVER);
         statusBar.setBorder(BorderFactory.createEmptyBorder(0, 8, 8, 8));
@@ -71,7 +116,7 @@ public class AddTaskView extends JPanel implements AddTaskViewModelListener {
     private JPanel buildForm() {
         final JPanel form = new JPanel(new GridBagLayout());
         form.setBackground(Y2KStyle.SILVER);
-        form.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "New Task"));
+        form.setBorder(Y2KStyle.section("New Task"));
 
         Y2KStyle.styleInput(titleField);
         Y2KStyle.styleInput(dueField);
@@ -83,16 +128,16 @@ public class AddTaskView extends JPanel implements AddTaskViewModelListener {
         priorityBox.setSelectedIndex(1);
 
         addRow(form, 0, "Title:", titleField);
-        addRow(form, 1, "Due (YYYY-MM-DD):", dueField);
+        addRow(form, 1, "Due date (YYYY-MM-DD):", dueField);
         addRow(form, 2, "Priority:", priorityBox);
         final JScrollPane noteScroll = new JScrollPane(noteArea);
         noteScroll.setBorder(null);
         addRow(form, 3, "Notes:", noteScroll);
 
-        final JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+        final JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         buttons.setBackground(Y2KStyle.SILVER);
         buttons.add(addButton);
-        buttons.add(cancelButton);
+        buttons.add(completeButton);
         final GridBagConstraints c = new GridBagConstraints();
         c.gridx = 0;
         c.gridy = 4;
@@ -103,7 +148,7 @@ public class AddTaskView extends JPanel implements AddTaskViewModelListener {
         return form;
     }
 
-    private void addRow(JPanel form, int row, String labelText, Component field) {
+    private void addRow(JPanel form, int row, String labelText, java.awt.Component field) {
         final GridBagConstraints left = new GridBagConstraints();
         left.gridx = 0;
         left.gridy = row;
@@ -131,7 +176,7 @@ public class AddTaskView extends JPanel implements AddTaskViewModelListener {
 
         final JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Y2KStyle.SILVER);
-        panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Upcoming Tasks"));
+        panel.setBorder(Y2KStyle.section("Task List"));
         panel.add(scroll, BorderLayout.CENTER);
         return panel;
     }
@@ -179,6 +224,9 @@ public class AddTaskView extends JPanel implements AddTaskViewModelListener {
         else if (state.isTaskAdded()) {
             clearForm();
             setStatus("Task added.", false);
+        }
+        else if (listModel.isEmpty()) {
+            setStatus(FIRST_TASK_HINT, false);
         }
     }
 }

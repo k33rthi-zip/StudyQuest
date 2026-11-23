@@ -33,7 +33,7 @@ public final class TaskRowFormatter {
             label = "HIGH";
         }
         else if (priority == 2) {
-            label = "MID ";
+            label = "MID";
         }
         else {
             label = "LOW ";

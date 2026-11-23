@@ -1,4 +1,3 @@
-
 package use_case.add_task;
 
 import java.time.LocalDate;
@@ -7,8 +6,12 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
+
 import entity.Task;
 
+/**
+ * The Add Task Interactor.
+ */
 public class AddTaskInteractor implements AddTaskInputBoundary {
 
     private final AddTaskUserDataAccessInterface dataAccess;
@@ -44,10 +47,10 @@ public class AddTaskInteractor implements AddTaskInputBoundary {
         final Task task = new Task(UUID.randomUUID().toString(), title, dueDate,
                 inputData.getPriority(), inputData.getNote());
         dataAccess.saveTask(task);
-        presenter.prepareSuccessView(new AddTaskOutputData(buildUpcomingList()));
+        presenter.prepareSuccessView(new AddTaskOutputData(upcomingTasks()));
     }
 
-    private List<AddTaskOutputData.TaskSummary> buildUpcomingList() {
+    private List<Task> upcomingTasks() {
         final List<Task> upcoming = new ArrayList<>();
         for (Task task : dataAccess.getAllTasks()) {
             if (!task.isCompleted()) {
@@ -57,12 +60,6 @@ public class AddTaskInteractor implements AddTaskInputBoundary {
         upcoming.sort(Comparator.comparing(Task::getDueDate)
                 .thenComparing(Comparator.comparingInt(Task::getPriority).reversed())
                 .thenComparing(Task::getTitle));
-
-        final List<AddTaskOutputData.TaskSummary> summaries = new ArrayList<>();
-        for (Task task : upcoming) {
-            summaries.add(new AddTaskOutputData.TaskSummary(task.getTitle(), task.getDueDate(),
-                    task.getPriority(), task.getNote()));
-        }
-        return summaries;
+        return upcoming;
     }
 }

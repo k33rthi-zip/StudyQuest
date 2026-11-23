@@ -13,6 +13,7 @@ import use_case.add_task.AddTaskInputBoundary;
 import use_case.add_task.AddTaskInteractor;
 import use_case.add_task.AddTaskOutputBoundary;
 import view.AddTaskView;
+import view.HomeView;
 
 public class AppBuilder {
     private final JPanel cardPanel = new JPanel();
@@ -20,11 +21,20 @@ public class AppBuilder {
 
     private final InMemoryTaskDataAccessObject taskDataAccessObject = new InMemoryTaskDataAccessObject();
 
+    private HomeView homeView;
     private AddTaskViewModel addTaskViewModel;
     private AddTaskView addTaskView;
 
     public AppBuilder() {
         cardPanel.setLayout(cardLayout);
+    }
+
+    public AppBuilder addHomeView() {
+        homeView = new HomeView();
+        homeView.setTaskManagerAction(() -> cardLayout.show(cardPanel, AddTaskViewModel.VIEW_NAME));
+        //here call setUsername, setLogOutAction, setShopAction
+        cardPanel.add(homeView, HomeView.VIEW_NAME);
+        return this;
     }
 
     public AppBuilder addAddTaskView() {
@@ -38,7 +48,7 @@ public class AppBuilder {
         final AddTaskOutputBoundary outputBoundary = new AddTaskPresenter(addTaskViewModel);
         final AddTaskInputBoundary interactor = new AddTaskInteractor(taskDataAccessObject, outputBoundary);
         addTaskView.setAddTaskController(new AddTaskController(interactor));
-        addTaskView.setBackToDashboardAction(() -> cardLayout.show(cardPanel, "dashboard"));
+        addTaskView.setBackToDashboardAction(() -> cardLayout.show(cardPanel, HomeView.VIEW_NAME));
         return this;
     }
 
@@ -46,7 +56,7 @@ public class AppBuilder {
         final JFrame application = new JFrame("StudyQuest");
         application.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         application.add(cardPanel);
-        cardLayout.show(cardPanel, AddTaskViewModel.VIEW_NAME);
+        cardLayout.show(cardPanel, HomeView.VIEW_NAME);
         return application;
     }
 }

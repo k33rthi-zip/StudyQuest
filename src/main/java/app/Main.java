@@ -15,6 +15,7 @@ public class Main {
 
         SwingUtilities.invokeLater(() -> {
             final JFrame application = new AppBuilder()
+                    .addHomeView()
                     .addAddTaskView()
                     .addAddTaskUseCase()
                     .build();

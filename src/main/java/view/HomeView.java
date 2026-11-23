@@ -18,6 +18,7 @@ public class HomeView extends JPanel{
     private final JButton taskManagerButton = Y2KStyle.button("Task Manager");
     private final JButton shopButton = Y2KStyle.button("Shop");
     private final JButton logOutButton = Y2KStyle.compactButton("Log Out");
+    private final JButton profileButton = Y2KStyle.button("Profile");
 
     private Runnable taskManagerAction = new Runnable() {
         @Override
@@ -35,6 +36,8 @@ public class HomeView extends JPanel{
         }
     };
 
+    private Runnable profileAction = () -> { };
+
     public HomeView() {
         setLayout(new BorderLayout());
         add(buildWindow(), BorderLayout.CENTER);
@@ -42,11 +45,15 @@ public class HomeView extends JPanel{
         taskManagerButton.addActionListener(event -> taskManagerAction.run());
         shopButton.addActionListener(event -> shopAction.run());
         logOutButton.addActionListener(event -> logOutAction.run());
+        profileButton.addActionListener(event -> profileAction.run());
         shopButton.setEnabled(false); //not implemented yet
     }
 
     public void setTaskManagerAction(Runnable action) {
         this.taskManagerAction = action;
+    }
+    public void setProfileAction(Runnable action) {
+        this.profileAction = action;
     }
     public void setShopAction(Runnable action){
         this.shopAction = action;
@@ -74,6 +81,7 @@ public class HomeView extends JPanel{
         grid.setBackground(Y2KStyle.SILVER);
         grid.setBorder(BorderFactory.createEmptyBorder(30, 250, 30, 250));
         grid.add(taskManagerButton);
+        grid.add(profileButton);
         grid.add(shopButton);
 
         final JPanel section = new JPanel(new BorderLayout());

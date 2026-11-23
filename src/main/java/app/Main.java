@@ -18,6 +18,8 @@ public class Main {
                     .addHomeView()
                     .addAddTaskView()
                     .addAddTaskUseCase()
+                    .addProfileView()
+                    .addViewAccountUseCase()
                     .build();
             application.setSize(1100, 760);
             application.setLocationRelativeTo(null);

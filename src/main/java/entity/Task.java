@@ -1,4 +1,3 @@
-
 package entity;
 
 import java.time.LocalDate;
@@ -12,7 +11,7 @@ public class Task {
     private boolean completed;
 
     public Task(String id, String title, LocalDate dueDate, int priority, String note) {
-        if (title == "") {
+        if (title == null || title.isBlank()) {
             throw new IllegalArgumentException("Add a title to the task");
         }
 

@@ -6,13 +6,19 @@ import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 import java.util.ArrayList;
 
+import data_access.InMemoryCharacterDataAccessObject;
 import data_access.InMemoryTaskDataAccessObject;
 import interface_adapter.add_task.AddTaskController;
 import interface_adapter.add_task.AddTaskPresenter;
-import interface_adapter.add_task.AddTaskViewModel;
+import interface_adapter.task_list.AddTaskViewModel;
+import interface_adapter.complete_task.CompleteTaskController;
+import interface_adapter.complete_task.CompleteTaskPresenter;
 import use_case.add_task.AddTaskInputBoundary;
 import use_case.add_task.AddTaskInteractor;
 import use_case.add_task.AddTaskOutputBoundary;
+import use_case.complete_task.CompleteTaskInputBoundary;
+import use_case.complete_task.CompleteTaskInteractor;
+import use_case.complete_task.CompleteTaskOutputBoundary;
 import view.AddTaskView;
 import view.HomeView;
 
@@ -34,6 +40,10 @@ public class AppBuilder {
     private final CardLayout cardLayout = new CardLayout();
 
     private final InMemoryTaskDataAccessObject taskDataAccessObject = new InMemoryTaskDataAccessObject();
+    // Placeholder character that holds the coins earned from completing tasks.
+    // Swap this for the logged-in user's StudyCharacter once login is wired in.
+    private final InMemoryCharacterDataAccessObject characterDataAccessObject =
+            new InMemoryCharacterDataAccessObject(new StudyCharacter(0, new Wardrobe()));
 
     private HomeView homeView;
     private AddTaskViewModel addTaskViewModel;
@@ -107,6 +117,14 @@ public class AppBuilder {
         final AddTaskInputBoundary interactor = new AddTaskInteractor(taskDataAccessObject, outputBoundary);
         addTaskView.setAddTaskController(new AddTaskController(interactor));
         addTaskView.setBackToDashboardAction(() -> cardLayout.show(cardPanel, HomeView.VIEW_NAME));
+        return this;
+    }
+
+    public AppBuilder addCompleteTaskUseCase() {
+        final CompleteTaskOutputBoundary outputBoundary = new CompleteTaskPresenter(addTaskViewModel);
+        final CompleteTaskInputBoundary interactor = new CompleteTaskInteractor(
+                taskDataAccessObject, characterDataAccessObject, outputBoundary);
+        addTaskView.setCompleteTaskController(new CompleteTaskController(interactor));
         return this;
     }
 

@@ -1,8 +1,6 @@
-"""
+/*
 User Information
 
 getUsername
-get pasword
-
-
-"""
+get_password
+*/

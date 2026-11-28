@@ -6,12 +6,14 @@ import java.util.List;
 import entity.Task;
 import use_case.add_task.AddTaskUserDataAccessInterface;
 import use_case.complete_task.CompleteTaskUserDataAccessInterface;
+import use_case.sort_tasks.SortTasksUserDataAccessInterface;
 
 /**
  * In-memory data access for tasks. Tasks are lost when the app closes.
  */
 public class InMemoryTaskDataAccessObject
-        implements AddTaskUserDataAccessInterface, CompleteTaskUserDataAccessInterface {
+        implements AddTaskUserDataAccessInterface, CompleteTaskUserDataAccessInterface,
+        SortTasksUserDataAccessInterface {
 
     private final List<Task> tasks = new ArrayList<>();
 

@@ -19,6 +19,7 @@ public class Main {
                     .addAddTaskView()
                     .addAddTaskUseCase()
                     .addCompleteTaskUseCase()
+                    .addSortTasksUseCase()
                     .addProfileView()
                     .addViewAccountUseCase()
                     .build();

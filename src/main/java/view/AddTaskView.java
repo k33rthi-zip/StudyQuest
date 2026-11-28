@@ -11,23 +11,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BorderFactory;
-import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingConstants;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 
 import interface_adapter.add_task.AddTaskController;
 import interface_adapter.task_list.AddTaskState;
 import interface_adapter.task_list.AddTaskViewModel;
 import interface_adapter.task_list.AddTaskViewModelListener;
+import interface_adapter.task_list.TaskRowFormatter;
 import interface_adapter.complete_task.CompleteTaskController;
+import interface_adapter.sort_tasks.SortTasksController;
 
 public class AddTaskView extends JPanel implements AddTaskViewModelListener {
 
@@ -41,14 +45,22 @@ public class AddTaskView extends JPanel implements AddTaskViewModelListener {
     private final JComboBox<String> priorityBox =
             new JComboBox<>(new String[] {"Low", "Mid", "High"});
     private final JTextArea noteArea = new JTextArea(3, 22);
-    private final DefaultListModel<String> listModel = new DefaultListModel<>();
-    private final JList<String> taskList = new JList<>(listModel);
+    private final DefaultTableModel tableModel = new DefaultTableModel(TaskRowFormatter.COLUMN_NAMES, 0) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+    };
+    private final JTable taskTable = new JTable(tableModel);
     private final JLabel statusLabel = Y2KStyle.label(FIRST_TASK_HINT);
     private final JButton addButton = Y2KStyle.button("Add Task");
     private final JButton completeButton = Y2KStyle.button("Complete Task");
+    private final JComboBox<String> sortBox =
+            new JComboBox<>(new String[] {SortTasksController.DUE_DATE, SortTasksController.PRIORITY});
     private final JButton backButton = Y2KStyle.compactButton("Back to Dashboard >");
     private Runnable backToDashboardAction = () -> { };
     private CompleteTaskController completeTaskController;
+    private SortTasksController sortTasksController;
     private List<String> taskIds = new ArrayList<>();
 
     public AddTaskView(AddTaskViewModel viewModel) {
@@ -59,14 +71,23 @@ public class AddTaskView extends JPanel implements AddTaskViewModelListener {
         add(buildWindow(), BorderLayout.CENTER);
 
         backButton.addActionListener(event -> backToDashboardAction.run());
-        addButton.addActionListener(event -> submit(false));
+        addButton.addActionListener(event -> {
+            submit(false);
+            keepSortOrder();
+        });
+        sortBox.addActionListener(event -> {
+            if (sortTasksController != null) {
+                sortTasksController.execute((String) sortBox.getSelectedItem(), true);
+            }
+        });
         completeButton.addActionListener(event -> {
-            final int selected = taskList.getSelectedIndex();
+            final int selected = taskTable.getSelectedRow();
             if (selected < 0) {
                 setStatus("Select a task in the Task List first.", true);
             }
             else {
                 completeTaskController.execute(taskIds.get(selected));
+                keepSortOrder();
             }
         });
     }
@@ -85,6 +106,19 @@ public class AddTaskView extends JPanel implements AddTaskViewModelListener {
 
     public void setCompleteTaskController(CompleteTaskController controller) {
         this.completeTaskController = controller;
+    }
+
+    public void setSortTasksController(SortTasksController controller) {
+        this.sortTasksController = controller;
+    }
+
+    /**
+     * Re-applies the chosen sort after a task is added or completed, without changing the status message.
+     */
+    private void keepSortOrder() {
+        if (sortTasksController != null) {
+            sortTasksController.execute((String) sortBox.getSelectedItem(), false);
+        }
     }
 
     private JPanel buildWindow() {
@@ -167,17 +201,54 @@ public class AddTaskView extends JPanel implements AddTaskViewModelListener {
     }
 
     private JPanel buildList() {
-        taskList.setFont(Y2KStyle.MONO_FONT);
-        taskList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        taskList.setSelectionBackground(Y2KStyle.NAVY);
-        taskList.setSelectionForeground(Color.WHITE);
+        taskTable.setFont(Y2KStyle.LABEL_FONT);
+        taskTable.setRowHeight(28);
+        taskTable.setShowGrid(true);
+        taskTable.setGridColor(new Color(160, 160, 160));
+        taskTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        taskTable.setSelectionBackground(Y2KStyle.NAVY);
+        taskTable.setSelectionForeground(Color.WHITE);
+        taskTable.setFillsViewportHeight(true);
+        taskTable.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+        taskTable.getTableHeader().setReorderingAllowed(false);
+        taskTable.getTableHeader().setResizingAllowed(false);
+        taskTable.getTableHeader().setFont(Y2KStyle.SECTION_FONT);
+        taskTable.getTableHeader().setBackground(Y2KStyle.SILVER);
+        taskTable.getTableHeader().setBorder(Y2KStyle.raised());
+        taskTable.getColumnModel().getColumn(0).setPreferredWidth(90);
+        taskTable.getColumnModel().getColumn(1).setPreferredWidth(130);
+        taskTable.getColumnModel().getColumn(2).setPreferredWidth(300);
+        taskTable.getColumnModel().getColumn(3).setPreferredWidth(340);
 
-        final JScrollPane scroll = new JScrollPane(taskList);
+        final DefaultTableCellRenderer centered = new DefaultTableCellRenderer();
+        centered.setHorizontalAlignment(SwingConstants.CENTER);
+        taskTable.getColumnModel().getColumn(0).setCellRenderer(centered);
+        taskTable.getColumnModel().getColumn(1).setCellRenderer(centered);
+
+        final JScrollPane scroll = new JScrollPane(taskTable);
+        scroll.setColumnHeaderView(taskTable.getTableHeader());
         scroll.setBorder(Y2KStyle.sunken());
+        scroll.getViewport().setBackground(Color.WHITE);
 
         final JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Y2KStyle.SILVER);
         panel.setBorder(Y2KStyle.section("Task List"));
+
+        sortBox.setFont(Y2KStyle.LABEL_FONT);
+        sortBox.setBackground(Color.WHITE);
+        sortBox.setPreferredSize(new Dimension(170, 30));
+        final JPanel sortRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 4));
+        sortRow.setBackground(Y2KStyle.SILVER);
+        sortRow.setBorder(Y2KStyle.raised());
+        sortRow.add(Y2KStyle.label("Sort by:"));
+        sortRow.add(sortBox);
+
+        final JPanel sortBar = new JPanel(new BorderLayout());
+        sortBar.setBackground(Y2KStyle.SILVER);
+        sortBar.setBorder(BorderFactory.createEmptyBorder(2, 0, 8, 0));
+        sortBar.add(sortRow, BorderLayout.CENTER);
+
+        panel.add(sortBar, BorderLayout.NORTH);
         panel.add(scroll, BorderLayout.CENTER);
         return panel;
     }
@@ -216,8 +287,10 @@ public class AddTaskView extends JPanel implements AddTaskViewModelListener {
             return;
         }
 
-        listModel.clear();
-        listModel.addAll(state.getUpcomingTasks());
+        tableModel.setRowCount(0);
+        for (String row : state.getUpcomingTasks()) {
+            tableModel.addRow(row.split(TaskRowFormatter.SEPARATOR, -1));
+        }
         taskIds = new ArrayList<>(state.getUpcomingTaskIds());
 
         if (!state.getError().isEmpty()) {
@@ -230,7 +303,7 @@ public class AddTaskView extends JPanel implements AddTaskViewModelListener {
         else if (!state.getSuccessMessage().isEmpty()) {
             setStatus(state.getSuccessMessage(), false);
         }
-        else if (listModel.isEmpty()) {
+        else if (tableModel.getRowCount() == 0) {
             setStatus(FIRST_TASK_HINT, false);
         }
     }

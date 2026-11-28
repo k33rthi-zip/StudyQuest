@@ -7,6 +7,8 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
@@ -22,9 +24,10 @@ import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 
 import interface_adapter.add_task.AddTaskController;
-import interface_adapter.add_task.AddTaskState;
-import interface_adapter.add_task.AddTaskViewModel;
-import interface_adapter.add_task.AddTaskViewModelListener;
+import interface_adapter.task_list.AddTaskState;
+import interface_adapter.task_list.AddTaskViewModel;
+import interface_adapter.task_list.AddTaskViewModelListener;
+import interface_adapter.complete_task.CompleteTaskController;
 
 public class AddTaskView extends JPanel implements AddTaskViewModelListener {
 
@@ -45,7 +48,8 @@ public class AddTaskView extends JPanel implements AddTaskViewModelListener {
     private final JButton completeButton = Y2KStyle.button("Complete Task");
     private final JButton backButton = Y2KStyle.compactButton("Back to Dashboard >");
     private Runnable backToDashboardAction = () -> { };
-    private Runnable completeTaskAction = () -> setStatus("Complete Task isn't connected yet.", false);
+    private CompleteTaskController completeTaskController;
+    private List<String> taskIds = new ArrayList<>();
 
     public AddTaskView(AddTaskViewModel viewModel) {
         this.viewModel = viewModel;
@@ -57,11 +61,12 @@ public class AddTaskView extends JPanel implements AddTaskViewModelListener {
         backButton.addActionListener(event -> backToDashboardAction.run());
         addButton.addActionListener(event -> submit(false));
         completeButton.addActionListener(event -> {
-            if (taskList.getSelectedIndex() < 0) {
+            final int selected = taskList.getSelectedIndex();
+            if (selected < 0) {
                 setStatus("Select a task in the Task List first.", true);
             }
             else {
-                completeTaskAction.run();
+                completeTaskController.execute(taskIds.get(selected));
             }
         });
     }
@@ -78,12 +83,8 @@ public class AddTaskView extends JPanel implements AddTaskViewModelListener {
         this.backToDashboardAction = action;
     }
 
-    /**
-     * Sets what the "Complete Task" button does once a task is selected in the list.
-     * @param action the code to run when the button is clicked
-     */
-    public void setCompleteTaskAction(Runnable action) {
-        this.completeTaskAction = action;
+    public void setCompleteTaskController(CompleteTaskController controller) {
+        this.completeTaskController = controller;
     }
 
     private JPanel buildWindow() {
@@ -217,13 +218,17 @@ public class AddTaskView extends JPanel implements AddTaskViewModelListener {
 
         listModel.clear();
         listModel.addAll(state.getUpcomingTasks());
+        taskIds = new ArrayList<>(state.getUpcomingTaskIds());
 
         if (!state.getError().isEmpty()) {
             setStatus("Error: " + state.getError(), true);
         }
         else if (state.isTaskAdded()) {
             clearForm();
-            setStatus("Task added.", false);
+            setStatus(state.getSuccessMessage(), false);
+        }
+        else if (!state.getSuccessMessage().isEmpty()) {
+            setStatus(state.getSuccessMessage(), false);
         }
         else if (listModel.isEmpty()) {
             setStatus(FIRST_TASK_HINT, false);

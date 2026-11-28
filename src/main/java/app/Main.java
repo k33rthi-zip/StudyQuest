@@ -18,6 +18,7 @@ public class Main {
                     .addHomeView()
                     .addAddTaskView()
                     .addAddTaskUseCase()
+                    .addCompleteTaskUseCase()
                     .addProfileView()
                     .addStudyModeView()
                     .addViewAccountUseCase()

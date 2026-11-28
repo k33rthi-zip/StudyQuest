@@ -13,12 +13,17 @@ import interface_adapter.add_task.AddTaskPresenter;
 import interface_adapter.task_list.AddTaskViewModel;
 import interface_adapter.complete_task.CompleteTaskController;
 import interface_adapter.complete_task.CompleteTaskPresenter;
+import interface_adapter.sort_tasks.SortTasksController;
+import interface_adapter.sort_tasks.SortTasksPresenter;
 import use_case.add_task.AddTaskInputBoundary;
 import use_case.add_task.AddTaskInteractor;
 import use_case.add_task.AddTaskOutputBoundary;
 import use_case.complete_task.CompleteTaskInputBoundary;
 import use_case.complete_task.CompleteTaskInteractor;
 import use_case.complete_task.CompleteTaskOutputBoundary;
+import use_case.sort_tasks.SortTasksInputBoundary;
+import use_case.sort_tasks.SortTasksInteractor;
+import use_case.sort_tasks.SortTasksOutputBoundary;
 import view.AddTaskView;
 import view.HomeView;
 
@@ -125,6 +130,13 @@ public class AppBuilder {
         final CompleteTaskInputBoundary interactor = new CompleteTaskInteractor(
                 taskDataAccessObject, characterDataAccessObject, outputBoundary);
         addTaskView.setCompleteTaskController(new CompleteTaskController(interactor));
+        return this;
+    }
+
+    public AppBuilder addSortTasksUseCase() {
+        final SortTasksOutputBoundary outputBoundary = new SortTasksPresenter(addTaskViewModel);
+        final SortTasksInputBoundary interactor = new SortTasksInteractor(taskDataAccessObject, outputBoundary);
+        addTaskView.setSortTasksController(new SortTasksController(interactor));
         return this;
     }
 

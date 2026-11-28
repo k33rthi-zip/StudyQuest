@@ -232,3 +232,79 @@ public class AddTaskView extends JPanel implements AddTaskViewModelListener {
 
         final JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Y2KStyle.SILVER);
+        panel.setBorder(Y2KStyle.section("Task List"));
+
+        sortBox.setFont(Y2KStyle.LABEL_FONT);
+        sortBox.setBackground(Color.WHITE);
+        sortBox.setPreferredSize(new Dimension(170, 30));
+        final JPanel sortRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 12, 4));
+        sortRow.setBackground(Y2KStyle.SILVER);
+        sortRow.setBorder(Y2KStyle.raised());
+        sortRow.add(Y2KStyle.label("Sort by:"));
+        sortRow.add(sortBox);
+
+        final JPanel sortBar = new JPanel(new BorderLayout());
+        sortBar.setBackground(Y2KStyle.SILVER);
+        sortBar.setBorder(BorderFactory.createEmptyBorder(2, 0, 8, 0));
+        sortBar.add(sortRow, BorderLayout.CENTER);
+
+        panel.add(sortBar, BorderLayout.NORTH);
+        panel.add(scroll, BorderLayout.CENTER);
+        return panel;
+    }
+
+    private void submit(boolean confirmPastDue) {
+        controller.execute(titleField.getText(), dueField.getText(),
+                priorityBox.getSelectedIndex() + 1, noteArea.getText(), confirmPastDue);
+    }
+
+    private void clearForm() {
+        titleField.setText("");
+        dueField.setText("");
+        noteArea.setText("");
+        priorityBox.setSelectedIndex(1);
+    }
+
+    private void setStatus(String message, boolean isError) {
+        statusLabel.setText(message);
+        statusLabel.setForeground(isError ? Y2KStyle.ERROR_RED : Color.BLACK);
+    }
+
+    @Override
+    public void stateChanged() {
+        final AddTaskState state = viewModel.getState();
+
+        if (state.isConfirmPastDueRequested()) {
+            final int choice = JOptionPane.showConfirmDialog(this,
+                    "That due date is in the past. Add the task anyway?",
+                    "StudyQuest", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+            if (choice == JOptionPane.YES_OPTION) {
+                submit(true);
+            }
+            else {
+                setStatus("Task not added. Change the due date and try again.", false);
+            }
+            return;
+        }
+
+        tableModel.setRowCount(0);
+        for (String row : state.getUpcomingTasks()) {
+            tableModel.addRow(row.split(TaskRowFormatter.SEPARATOR, -1));
+        }
+        taskIds = new ArrayList<>(state.getUpcomingTaskIds());
+
+        if (!state.getError().isEmpty()) {
+            setStatus("Error: " + state.getError(), true);
+        }
+        else if (state.isTaskAdded()) {
+            clearForm();
+            setStatus(state.getSuccessMessage(), false);
+        }
+        else if (!state.getSuccessMessage().isEmpty()) {
+            setStatus(state.getSuccessMessage(), false);
+        }
+        else if (tableModel.getRowCount() == 0) {
+            setStatus(FIRST_TASK_HINT, false);
+        }
+    }
+}

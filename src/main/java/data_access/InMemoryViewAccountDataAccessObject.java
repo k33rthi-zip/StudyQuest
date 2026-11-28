@@ -2,9 +2,12 @@ package data_access;
 
 import entity.User;
 import use_case.view_account.ViewAccountUserDataAccessInterface;
+import use_case.complete_study_session
+        .CompleteStudySessionUserDataAccessInterface;
 
 public class InMemoryViewAccountDataAccessObject
-        implements ViewAccountUserDataAccessInterface {
+        implements ViewAccountUserDataAccessInterface,
+        CompleteStudySessionUserDataAccessInterface{
 
     private User currentUser;
 

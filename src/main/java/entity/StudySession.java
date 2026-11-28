@@ -1,11 +1,15 @@
+
 package entity;
 
+import java.time.Instant;
+import java.time.Duration;
 
 public class StudySession {
 
     private final int plannedMinutes;
     private int minutesCompleted;
     private String status;
+    private final Instant startTime;
 
     public StudySession(int plannedMinutes) {
         if (plannedMinutes <= 0) {
@@ -17,6 +21,21 @@ public class StudySession {
         this.plannedMinutes = plannedMinutes;
         this.minutesCompleted = 0;
         this.status = "In Progress";
+        this.startTime = Instant.now();
+    }
+
+    public long getRemainingSeconds() {
+        long elapsedSeconds = Duration.between(
+                startTime, Instant.now()
+        ).getSeconds();
+
+        return Math.max(
+                0, plannedMinutes * 60L - elapsedSeconds
+        );
+    }
+
+    public boolean isFinished() {
+        return getRemainingSeconds() == 0;
     }
 
     public int getPlannedMinutes() {
@@ -31,23 +50,25 @@ public class StudySession {
         return status;
     }
 
-    public void pause() {
-        if (status.equals("In Progress")) {
-            status = "Paused";
-        }
-    }
-
-    public void resume() {
-        if (status.equals("Paused")) {
-            status = "In Progress";
-        }
+    public Instant getStartTime() {
+        return startTime;
     }
 
     public void complete() {
-        if (status.equals("In Progress")
-                && minutesCompleted >= plannedMinutes) {
-            status = "Completed";
+        if (!status.equals("In Progress")) {
+            throw new IllegalStateException(
+                    "Session is not active."
+            );
         }
+
+        if (!isFinished()) {
+            throw new IllegalStateException(
+                    "Session has not finished yet."
+            );
+        }
+
+        minutesCompleted = plannedMinutes;
+        status = "Completed";
     }
 
     public void quit(int minutesElapsed) {

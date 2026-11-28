@@ -1,5 +1,21 @@
 package app;
+import data_access.InMemoryStudySessionDataAccessObject;
 
+import interface_adapter.study_mode.StudyModeViewModel;
+
+import interface_adapter.select_study_duration.SelectDurationController;
+import interface_adapter.select_study_duration.SelectDurationPresenter;
+
+import interface_adapter.start_study_session.StartStudySessionController;
+import interface_adapter.start_study_session.StartStudySessionPresenter;
+
+import use_case.select_study_duration.SelectDurationInteractor;
+import use_case.start_study_session.StartStudySessionInteractor;
+
+import View.StudyModeView;
+import View.AddTaskView;
+import View.HomeView;
+import View.ProfileView;
 import java.awt.CardLayout;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -13,11 +29,9 @@ import interface_adapter.add_task.AddTaskViewModel;
 import use_case.add_task.AddTaskInputBoundary;
 import use_case.add_task.AddTaskInteractor;
 import use_case.add_task.AddTaskOutputBoundary;
-import view.AddTaskView;
-import view.HomeView;
+
 
 import interface_adapter.view_account.ViewAccountViewModel;
-import view.ProfileView;
 import data_access.InMemoryViewAccountDataAccessObject;
 import entity.User;
 import entity.StudyCharacter;
@@ -28,15 +42,35 @@ import use_case.view_account.ViewAccountInputBoundary;
 import use_case.view_account.ViewAccountInteractor;
 import use_case.view_account.ViewAccountOutputBoundary;
 import use_case.view_account.ViewAccountUserDataAccessInterface;
+import interface_adapter.complete_study_session.CompleteSessionController;
+import interface_adapter.complete_study_session.CompleteSessionPresenter;
+import use_case.complete_study_session.CompleteStudySessionInteractor;
+import interface_adapter.quit_study_session.QuitStudySessionController;
+import interface_adapter.quit_study_session.QuitStudySessionPresenter;
+import use_case.quit_study_session.QuitStudySessionInteractor;
 
 public class AppBuilder {
     private final JPanel cardPanel = new JPanel();
     private final CardLayout cardLayout = new CardLayout();
 
     private final InMemoryTaskDataAccessObject taskDataAccessObject = new InMemoryTaskDataAccessObject();
+    private final InMemoryStudySessionDataAccessObject
+            studySessionDataAccessObject =
+            new InMemoryStudySessionDataAccessObject();
+    private final User demoUser = new User(
+            "demo_user",
+            "demo_password",
+            new StudyCharacter(100, new Wardrobe()),
+            new ArrayList<>()
+    );
 
+    private final InMemoryViewAccountDataAccessObject
+            userDataAccessObject =
+            new InMemoryViewAccountDataAccessObject(demoUser);
     private HomeView homeView;
     private AddTaskViewModel addTaskViewModel;
+    private StudyModeViewModel studyModeViewModel;
+    private StudyModeView studyMode;
     private AddTaskView addTaskView;
     private ViewAccountViewModel viewAccountViewModel;
     private ProfileView profileView;
@@ -48,6 +82,22 @@ public class AppBuilder {
     public AppBuilder addHomeView() {
         homeView = new HomeView();
         homeView.setTaskManagerAction(() -> cardLayout.show(cardPanel, AddTaskViewModel.VIEW_NAME));
+        homeView.setStudyModeAction(() -> {
+
+            int coins = userDataAccessObject
+                    .getCurrentUser()
+                    .getCharacter()
+                    .getCoins();
+
+            studyModeViewModel.getState().setCoins(coins);
+
+            studyModeViewModel.firePropertyChanged();
+
+            cardLayout.show(
+                    cardPanel,
+                    StudyModeViewModel.VIEW_NAME
+            );
+        });
         //here call setUsername, setLogOutAction, setShopAction
         cardPanel.add(homeView, HomeView.VIEW_NAME);
         return this;
@@ -70,22 +120,11 @@ public class AppBuilder {
     }
 
     public AppBuilder addViewAccountUseCase() {
-        // Temporary demo user for PP01.
-        final User demoUser = new User(
-                "demo_user",
-                "demo_password",
-                new StudyCharacter(100, new Wardrobe()),
-                new ArrayList<>()
-        );
-
-        final ViewAccountUserDataAccessInterface userDataAccess =
-                new InMemoryViewAccountDataAccessObject(demoUser);
-
         final ViewAccountOutputBoundary outputBoundary =
                 new ViewAccountPresenter(viewAccountViewModel);
 
         final ViewAccountInputBoundary interactor =
-                new ViewAccountInteractor(userDataAccess, outputBoundary);
+                new ViewAccountInteractor(userDataAccessObject, outputBoundary);
 
         final ViewAccountController controller =
                 new ViewAccountController(interactor);
@@ -100,6 +139,88 @@ public class AppBuilder {
 
         return this;
     }
+
+
+    public AppBuilder addStudyModeView() {
+
+        studyModeViewModel = new StudyModeViewModel();
+
+        // SM01: Select Study Duration
+        final SelectDurationPresenter selectPresenter =
+                new SelectDurationPresenter(studyModeViewModel);
+
+        final SelectDurationInteractor selectInteractor =
+                new SelectDurationInteractor(selectPresenter);
+
+        final SelectDurationController selectController =
+                new SelectDurationController(selectInteractor);
+
+
+        // SM02: Start Study Session
+        final StartStudySessionPresenter startPresenter =
+                new StartStudySessionPresenter(studyModeViewModel);
+
+        final StartStudySessionInteractor startInteractor =
+                new StartStudySessionInteractor(
+                        studySessionDataAccessObject,
+                        startPresenter
+                );
+
+        final StartStudySessionController startController =
+                new StartStudySessionController(startInteractor);
+
+
+        // SM03: Complete Study Session
+        final CompleteSessionPresenter completePresenter =
+                new CompleteSessionPresenter(studyModeViewModel);
+
+        final CompleteStudySessionInteractor completeInteractor =
+                new CompleteStudySessionInteractor(
+                        studySessionDataAccessObject,
+                        userDataAccessObject,
+                        completePresenter
+                );
+
+        final CompleteSessionController completeController =
+                new CompleteSessionController(completeInteractor);
+
+        // SM04: Quit Study Session
+        final QuitStudySessionPresenter quitPresenter =
+                new QuitStudySessionPresenter(studyModeViewModel);
+
+        final QuitStudySessionInteractor quitInteractor =
+                new QuitStudySessionInteractor(
+                        studySessionDataAccessObject,
+                        quitPresenter
+                );
+
+        final QuitStudySessionController quitController =
+                new QuitStudySessionController(quitInteractor);
+        // Create Study Mode View
+        studyMode = new StudyModeView(
+                studyModeViewModel,
+                selectController,
+                startController,
+                completeController,quitController
+        );
+
+        studyMode.setUsername(
+                userDataAccessObject.getCurrentUser().getUsername()
+        );
+
+        studyMode.setBackToDashboardAction(() ->
+                cardLayout.show(cardPanel, HomeView.VIEW_NAME)
+        );
+
+        cardPanel.add(
+                studyMode,
+                StudyModeViewModel.VIEW_NAME
+        );
+
+        return this;
+    }
+
+
 
 
     public AppBuilder addAddTaskUseCase() {

@@ -1,4 +1,4 @@
-package view;
+package View;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -11,7 +11,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
-public class HomeView extends JPanel{
+public class HomeView extends JPanel {
 
     public static final String VIEW_NAME = "home";
 
@@ -19,6 +19,8 @@ public class HomeView extends JPanel{
     private final JButton shopButton = Y2KStyle.button("Shop");
     private final JButton logOutButton = Y2KStyle.compactButton("Log Out");
     private final JButton profileButton = Y2KStyle.button("Profile");
+    private final JButton studyModeButton =
+            Y2KStyle.button("Study Mode");
 
     private Runnable taskManagerAction = new Runnable() {
         @Override
@@ -35,59 +37,71 @@ public class HomeView extends JPanel{
         public void run() {
         }
     };
+    private Runnable studyModeAction = () -> { };
 
     private Runnable profileAction = () -> { };
 
-    public HomeView() {
-        setLayout(new BorderLayout());
-        add(buildWindow(), BorderLayout.CENTER);
+        public HomeView() {
+            setLayout(new BorderLayout());
+            add(buildWindow(), BorderLayout.CENTER);
 
-        taskManagerButton.addActionListener(event -> taskManagerAction.run());
-        shopButton.addActionListener(event -> shopAction.run());
-        logOutButton.addActionListener(event -> logOutAction.run());
-        profileButton.addActionListener(event -> profileAction.run());
-        shopButton.setEnabled(false); //not implemented yet
-    }
+            taskManagerButton.addActionListener(event -> taskManagerAction.run());
+            shopButton.addActionListener(event -> shopAction.run());
+            logOutButton.addActionListener(event -> logOutAction.run());
+            profileButton.addActionListener(event -> profileAction.run());
+            studyModeButton.addActionListener(
+                    event -> studyModeAction.run()
+            );
+            shopButton.setEnabled(false); //not implemented yet
+        }
 
-    public void setTaskManagerAction(Runnable action) {
-        this.taskManagerAction = action;
-    }
-    public void setProfileAction(Runnable action) {
-        this.profileAction = action;
-    }
-    public void setShopAction(Runnable action){
-        this.shopAction = action;
-        shopButton.setText("Shop");
-        shopButton.setEnabled(true);
-    }
-    public void setLogOutAction(Runnable action){
-        this.logOutAction = action;
-    }
+        public void setTaskManagerAction(Runnable action) {
+            this.taskManagerAction = action;
+        }
 
-    private JPanel buildWindow() {
-        final JPanel window = new JPanel(new BorderLayout());
-        window.setBackground(Y2KStyle.SILVER);
-        window.setBorder(BorderFactory.createCompoundBorder(Y2KStyle.raised(),
-                BorderFactory.createEmptyBorder(3, 3, 3, 3)));
-        window.setPreferredSize(new Dimension(960, 680));
+        public void setProfileAction(Runnable action) {
+            this.profileAction = action;
+        }
 
-        window.add(Y2KStyle.titleBar("StudyQuest - Home", logOutButton), BorderLayout.NORTH);
-        window.add(buildMenu(), BorderLayout.CENTER);
-        return window;
+        public void setShopAction(Runnable action) {
+            this.shopAction = action;
+            shopButton.setText("Shop");
+            shopButton.setEnabled(true);
+        }
+
+        public void setStudyModeAction(Runnable action) {
+            this.studyModeAction = action;
+        }
+
+        public void setLogOutAction(Runnable action) {
+            this.logOutAction = action;
+        }
+
+        private JPanel buildWindow() {
+            final JPanel window = new JPanel(new BorderLayout());
+            window.setBackground(Y2KStyle.SILVER);
+            window.setBorder(BorderFactory.createCompoundBorder(Y2KStyle.raised(),
+                    BorderFactory.createEmptyBorder(3, 3, 3, 3)));
+            window.setPreferredSize(new Dimension(960, 680));
+
+            window.add(Y2KStyle.titleBar("StudyQuest - Home", logOutButton), BorderLayout.NORTH);
+            window.add(buildMenu(), BorderLayout.CENTER);
+            return window;
+        }
+
+        private JPanel buildMenu() {
+            final JPanel grid = new JPanel(new GridLayout(0, 1, 0, 16));
+            grid.setBackground(Y2KStyle.SILVER);
+            grid.setBorder(BorderFactory.createEmptyBorder(30, 250, 30, 250));
+            grid.add(taskManagerButton);
+            grid.add(profileButton);
+            grid.add(studyModeButton);
+            grid.add(shopButton);
+
+            final JPanel section = new JPanel(new BorderLayout());
+            section.setBackground(Y2KStyle.SILVER);
+            section.setBorder(Y2KStyle.section("Main Menu"));
+            section.add(grid, BorderLayout.CENTER);
+            return section;
+        }
     }
-
-    private JPanel buildMenu() {
-        final JPanel grid = new JPanel(new GridLayout(0, 1, 0, 16));
-        grid.setBackground(Y2KStyle.SILVER);
-        grid.setBorder(BorderFactory.createEmptyBorder(30, 250, 30, 250));
-        grid.add(taskManagerButton);
-        grid.add(profileButton);
-        grid.add(shopButton);
-
-        final JPanel section = new JPanel(new BorderLayout());
-        section.setBackground(Y2KStyle.SILVER);
-        section.setBorder(Y2KStyle.section("Main Menu"));
-        section.add(grid, BorderLayout.CENTER);
-        return section;
-    }
-}

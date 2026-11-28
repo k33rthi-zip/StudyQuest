@@ -19,6 +19,7 @@ public class Main {
                     .addAddTaskView()
                     .addAddTaskUseCase()
                     .addProfileView()
+                    .addStudyModeView()
                     .addViewAccountUseCase()
                     .build();
             application.setSize(1100, 760);
